@@ -3,9 +3,7 @@ import { IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateTagDto {
   @ApiProperty({
-    example: 'frontend',
-    description:
-      'Label you will attach to tasks. Kept unique so filters stay predictable.',
+    example: 'tag',
   })
   @IsString()
   @MinLength(1)
