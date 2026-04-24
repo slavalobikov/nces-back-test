@@ -1,6 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsEnum,
   IsInt,
   IsOptional,
@@ -33,13 +35,25 @@ export class QueryTasksDto {
   @IsEnum(TaskPriority)
   priority?: TaskPriority;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    type: [String],
+  })
   @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  tag?: string;
+  @Transform(({ value }) => {
+    if (value === undefined || value === null || value === '') {
+      return undefined;
+    }
+    const arr = Array.isArray(value) ? value : [value];
+    const out = arr.map((v) => String(v).trim()).filter((v) => v.length > 0);
+    return out.length ? out : undefined;
+  })
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  tag?: string[];
 
-  @ApiPropertyOptional({})
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   @MaxLength(200)

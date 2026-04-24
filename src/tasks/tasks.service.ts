@@ -82,27 +82,30 @@ export class TasksService {
       if (query.search?.trim()) {
         qb.andWhere({ title: ILike(`%${query.search.trim()}%`) });
       }
-      if (query.tag?.trim()) {
-        const raw = query.tag.trim();
-        if (isUuid(raw)) {
-          qb.andWhere(
-            `EXISTS (
+      if (query.tag?.length) {
+        query.tag.forEach((raw, index) => {
+          if (isUuid(raw)) {
+            const key = `tagFilterId_${index}`;
+            qb.andWhere(
+              `EXISTS (
             SELECT 1 FROM task_tags tt
             INNER JOIN tags tg ON tg.id = tt.tag_id
-            WHERE tt.task_id = task.id AND tg.id = :tagFilterId
+            WHERE tt.task_id = task.id AND tg.id = :${key}
           )`,
-            { tagFilterId: raw },
-          );
-        } else {
-          qb.andWhere(
-            `EXISTS (
+              { [key]: raw },
+            );
+          } else {
+            const key = `tagFilterName_${index}`;
+            qb.andWhere(
+              `EXISTS (
             SELECT 1 FROM task_tags tt
             INNER JOIN tags tg ON tg.id = tt.tag_id
-            WHERE tt.task_id = task.id AND tg.name = :tagFilterName
+            WHERE tt.task_id = task.id AND tg.name = :${key}
           )`,
-            { tagFilterName: raw },
-          );
-        }
+              { [key]: raw },
+            );
+          }
+        });
       }
     };
     const countQb = this.taskRepo.createQueryBuilder('task');
